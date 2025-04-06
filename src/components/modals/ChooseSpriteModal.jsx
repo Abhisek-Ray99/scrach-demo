@@ -14,7 +14,7 @@ const ChooseSpritePopover = ({ isOpen, onClose, onSelectSpriteType, anchorRef })
     <>
       {isOpen && (
         <div 
-          className="absolute z-50 bg-white rounded-lg shadow-lg border border-gray-200"
+          className="absolute z-50 bg-[#171717] rounded-lg shadow-lg"
           style={{
             top: anchorRef?.current?.getBoundingClientRect().bottom + 10 || '50%',
             left: anchorRef?.current?.getBoundingClientRect().left || '50%',
@@ -23,9 +23,9 @@ const ChooseSpritePopover = ({ isOpen, onClose, onSelectSpriteType, anchorRef })
         >
           <div className="p-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Choose a Sprite</h2>
+              <h2 className="text-xl font-semibold text-white">Choose a Sprite</h2>
               <button 
-                className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full p-1"
+                className="text-white hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-full p-1"
                 onClick={onClose} 
                 aria-label="Close popover"
               >
@@ -37,7 +37,7 @@ const ChooseSpritePopover = ({ isOpen, onClose, onSelectSpriteType, anchorRef })
                 <button
                   key={sprite.type}
                   onClick={() => handleSelect(sprite.type)}
-                  className="flex flex-col items-center p-3 border border-gray-200 rounded-md hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 transition-colors duration-150 ease-in-out"
+                  className="flex flex-col items-center p-3 border border-gray-200 rounded-md hover:bg-[#17262a] hover:border-[#1374e8] focus:ring-[#1374e8] focus:ring-offset-1 transition-colors duration-150 ease-in-out"
                   title={`Add ${sprite.name}`}
                 >
                   <img
