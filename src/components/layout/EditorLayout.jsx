@@ -1,5 +1,5 @@
 // src/components/layout/EditorLayout.jsx
-import React, { useContext } from "react"; // Make sure useContext is imported
+import React, { useContext, useEffect } from "react"; // Make sure useContext is imported
 import { Play, Pause, Flag, Square } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Stage from "./Stage";
@@ -7,12 +7,11 @@ import ScriptArea from "../editor/ScriptArea";
 import SpriteList from "../sprites/SpriteList";
 import { AppContext } from "../../contexts/AppContext";
 import { useSpriteAnimation } from "../../hooks/useSpriteAnimation"; // <-- Import the hook
+import { useCollisionDetection } from '../../hooks/useCollisionDetection';
 
 const EditorLayout = () => {
   const { state, dispatch } = useContext(AppContext);
   const { isRunning, sprites } = state; // Get sprites state as well
-
-  console.log(state, "EditorLayout state"); // Log the state for debugging
 
   // --- Activate the Animation Hook ---
   // Pass the necessary state and dispatch function to the hook
@@ -30,6 +29,9 @@ const EditorLayout = () => {
     console.log("Stop Sign Clicked - Dispatching STOP_ANIMATION");
     dispatch({ type: "STOP_ANIMATION" });
   };
+  
+  useCollisionDetection(sprites, dispatch, isRunning);
+
 
   return (
     <div className="flex h-screen w-screen overflow-hidden font-sans">

@@ -1,6 +1,6 @@
 import React, { createContext, useReducer } from "react";
-import { BLOCK_DEFINITIONS } from "../constants/blocks";
-import { getSpriteDefinition } from "../constants/sprites"; // Import helper
+import { BLOCK_DEFINITIONS, BLOCK_TYPES } from '../constants/blocks';
+import { getSpriteDefinition } from '../constants/sprites';
 
 // --- Initial State ---
 const initialState = {
@@ -71,6 +71,49 @@ const findAndAddInContainer = (blocks, containerId, blockToAdd) => {
   }
   // Container ID not found at this level or any deeper level
   return false;
+};
+
+const modifyFirstMoveBlockValue = (script, blockTypes) => { // <-- Added blockTypes parameter
+  let modified = false;
+  const newScript = [...script];
+
+  // Define the inner function - it now has access to blockTypes via closure or parameter
+  const findAndModify = (blocks) => {
+    for (let i = 0; i < blocks.length; i++) {
+      if (modified) return;
+
+      const block = blocks[i];
+
+      // --- Use the passed blockTypes constant ---
+      if (block.type === blockTypes.MOTION_MOVE_STEPS) { // <-- Use parameter here
+        const originalValue = block.values?.[0] || 0;
+        const newValue = -originalValue;
+        const newBlock = {
+          ...block,
+          values: [newValue, ...(block.values?.slice(1) || [])]
+        };
+        blocks[i] = newBlock;
+        modified = true;
+        // console.log(`    -> Modified Move block ${block.id}: value ${originalValue} -> ${newValue}`);
+        return;
+      }
+      // --- End target block ---
+
+      if (block.children && block.children.length > 0) {
+        const newChildren = [...block.children];
+        findAndModify(newChildren); // Recurse
+        if (modified) {
+            // Update parent block with modified children (simplified approach)
+            blocks[i] = { ...block, children: newChildren };
+            return; // Stop searching other branches
+        }
+      }
+    }
+  };
+
+  findAndModify(newScript); // Start the recursive search
+
+  return modified ? newScript : script;
 };
 
 // --- Reducer Function ---
@@ -223,45 +266,37 @@ const appReducer = (state, action) => {
     case 'HANDLE_COLLISION': {
       const { spriteId1, spriteId2 } = action.payload;
 
-      if (!spriteId1 || !spriteId2) {
-        console.error("HANDLE_COLLISION requires spriteId1 and spriteId2.");
-        return state;
-      }
+      if (!spriteId1 || !spriteId2) { /* ... error handling ... */ return state; }
 
       const sprite1Index = state.sprites.findIndex(s => s.id === spriteId1);
       const sprite2Index = state.sprites.findIndex(s => s.id === spriteId2);
 
-      // Ensure both sprites were found
-      if (sprite1Index === -1 || sprite2Index === -1) {
-        console.warn(`Could not find one or both sprites for collision handling: ${spriteId1}, ${spriteId2}`);
-        return state;
-      }
+      if (sprite1Index === -1 || sprite2Index === -1) { /* ... error handling ... */ return state; }
 
-      console.log(`Handling collision: Swapping scripts between ${spriteId1} and ${spriteId2}`);
+      // console.log(`Handling collision: Modifying move steps for ${spriteId1} and ${spriteId2}`);
 
       const sprite1 = state.sprites[sprite1Index];
       const sprite2 = state.sprites[sprite2Index];
 
-      // Get the scripts to swap
-      const script1 = sprite1.script;
-      const script2 = sprite2.script;
+      // --- Modify the scripts using the helper ---
+      // *** Pass BLOCK_TYPES to the helper function ***
+      const modifiedScript1 = modifyFirstMoveBlockValue(sprite1.script, BLOCK_TYPES); // <-- Pass it here
+      const modifiedScript2 = modifyFirstMoveBlockValue(sprite2.script, BLOCK_TYPES); // <-- Pass it here
 
-      // Create a new sprites array for immutability
+      if (modifiedScript1 === sprite1.script && modifiedScript2 === sprite2.script) {
+        // console.log("  -> No MOVE blocks found or modified in colliding sprites.");
+        return state; // No changes needed
+      }
+
       const newSprites = [...state.sprites];
+      if (modifiedScript1 !== sprite1.script) {
+          newSprites[sprite1Index] = { ...sprite1, script: modifiedScript1 };
+      }
+      if (modifiedScript2 !== sprite2.script) {
+          newSprites[sprite2Index] = { ...sprite2, script: modifiedScript2 };
+      }
 
-      // Create *new* sprite objects with swapped scripts
-      // Important: Also reset execution state implicitly by changing script reference
-      newSprites[sprite1Index] = { ...sprite1, script: script2 };
-      newSprites[sprite2Index] = { ...sprite2, script: script1 };
-
-      // Return the new top-level state object
-      return {
-        ...state,
-        sprites: newSprites,
-        // Note: Swapping scripts might ideally reset their animation pointers too.
-        // The current useSpriteAnimation Effect 1 handles this because the
-        // 'sprites' array reference changes, triggering re-initialization.
-      };
+      return { ...state, sprites: newSprites };
     }
 
     case "START_ANIMATION": {
