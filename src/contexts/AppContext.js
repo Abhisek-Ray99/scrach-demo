@@ -220,30 +220,48 @@ const appReducer = (state, action) => {
       };
     }
 
-    case "HANDLE_COLLISION": {
+    case 'HANDLE_COLLISION': {
       const { spriteId1, spriteId2 } = action.payload;
-      const sprite1Index = state.sprites.findIndex((s) => s.id === spriteId1);
-      const sprite2Index = state.sprites.findIndex((s) => s.id === spriteId2);
 
-      if (sprite1Index !== -1 && sprite2Index !== -1) {
-        const sprite1 = state.sprites[sprite1Index];
-        const sprite2 = state.sprites[sprite2Index];
-
-        // Simple script swap
-        const script1 = sprite1.script;
-        const script2 = sprite2.script;
-
-        // Create a new sprites array with swapped scripts
-        const newSprites = [...state.sprites];
-        newSprites[sprite1Index] = { ...sprite1, script: script2 };
-        newSprites[sprite2Index] = { ...sprite2, script: script1 };
-
-        // TODO: Need to also reset animation state/pointer for these sprites
-        // if the animation hook relies on internal step counters per script.
-
-        return { ...state, sprites: newSprites };
+      if (!spriteId1 || !spriteId2) {
+        console.error("HANDLE_COLLISION requires spriteId1 and spriteId2.");
+        return state;
       }
-      return state; // No change if sprites not found
+
+      const sprite1Index = state.sprites.findIndex(s => s.id === spriteId1);
+      const sprite2Index = state.sprites.findIndex(s => s.id === spriteId2);
+
+      // Ensure both sprites were found
+      if (sprite1Index === -1 || sprite2Index === -1) {
+        console.warn(`Could not find one or both sprites for collision handling: ${spriteId1}, ${spriteId2}`);
+        return state;
+      }
+
+      console.log(`Handling collision: Swapping scripts between ${spriteId1} and ${spriteId2}`);
+
+      const sprite1 = state.sprites[sprite1Index];
+      const sprite2 = state.sprites[sprite2Index];
+
+      // Get the scripts to swap
+      const script1 = sprite1.script;
+      const script2 = sprite2.script;
+
+      // Create a new sprites array for immutability
+      const newSprites = [...state.sprites];
+
+      // Create *new* sprite objects with swapped scripts
+      // Important: Also reset execution state implicitly by changing script reference
+      newSprites[sprite1Index] = { ...sprite1, script: script2 };
+      newSprites[sprite2Index] = { ...sprite2, script: script1 };
+
+      // Return the new top-level state object
+      return {
+        ...state,
+        sprites: newSprites,
+        // Note: Swapping scripts might ideally reset their animation pointers too.
+        // The current useSpriteAnimation Effect 1 handles this because the
+        // 'sprites' array reference changes, triggering re-initialization.
+      };
     }
 
     case "START_ANIMATION": {
