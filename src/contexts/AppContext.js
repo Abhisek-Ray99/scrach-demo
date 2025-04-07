@@ -2,10 +2,61 @@ import React, { createContext, useReducer } from "react";
 import { BLOCK_DEFINITIONS, BLOCK_TYPES } from '../constants/blocks';
 import { getSpriteDefinition } from '../constants/sprites';
 
+// --- Define Initial Scripts ---
+const dogScript = [
+  { id: 'dog_flag_1', type: BLOCK_TYPES.EVENT_FLAG_CLICKED, values: [] },
+  {
+    id: 'dog_repeat_1', type: BLOCK_TYPES.CONTROL_REPEAT, values: [10], children: [
+      { id: 'dog_move_1', type: BLOCK_TYPES.MOTION_MOVE_STEPS, values: [10] } // Positive move
+    ]
+  }
+];
+
+const dinoScript = [
+  { id: 'dino_flag_1', type: BLOCK_TYPES.EVENT_FLAG_CLICKED, values: [] },
+  {
+    id: 'dino_repeat_1', type: BLOCK_TYPES.CONTROL_REPEAT, values: [10], children: [
+      { id: 'dino_move_1', type: BLOCK_TYPES.MOTION_MOVE_STEPS, values: [-10] } // Negative move
+    ]
+  }
+];
+
+// --- Get Default Dimensions (Optional but good practice) ---
+// Fallback values if definitions are missing
+const dogDef = getSpriteDefinition('dog') || { defaultWidth: 60, defaultHeight: 55 };
+const dinoDef = getSpriteDefinition('dinosaur') || { defaultWidth: 70, defaultHeight: 65 };
+
 // --- Initial State ---
 const initialState = {
-  sprites: [], // <-- Start with an empty array for sprites on stage
-  selectedSpriteId: null, // <-- No sprite selected initially
+  sprites: [
+    // Dog Sprite (Left Side)
+    {
+      id: 'dog-1', // Unique ID
+      type: 'dog',
+      x: -200, // Positioned left
+      y: 0,    // Centered vertically
+      direction: 90, // Facing right
+      width: dogDef.defaultWidth,
+      height: dogDef.defaultHeight,
+      size: 100,
+      sayMessage: null,
+      script: dogScript, // Assign predefined script
+    },
+    // Dinosaur Sprite (Right Side)
+    {
+      id: 'dino-1', // Unique ID
+      type: 'dinosaur',
+      x: 200, // Positioned right
+      y: 0,   // Centered vertically
+      direction: 90, // Facing left (optional, -90 or 270)
+      width: dinoDef.defaultWidth,
+      height: dinoDef.defaultHeight,
+      size: 100,
+      sayMessage: null,
+      script: dinoScript, // Assign predefined script
+    }
+  ],
+  selectedSpriteId: 'dog-1', // Select the dog initially (or null)
   isRunning: false,
 };
 
@@ -121,10 +172,11 @@ const appReducer = (state, action) => {
   console.log("Action Dispatched:", action.type, action.payload);
 
   switch (action.type) {
-    case "SELECT_SPRITE":
+    case "SELECT_SPRITE": {
       // Prevent selecting if the ID is the same (optional optimization)
       if (state.selectedSpriteId === action.payload.spriteId) return state;
       return { ...state, selectedSpriteId: action.payload.spriteId };
+    }
 
     case "ADD_SPRITE": {
       const { spriteType } = action.payload;
@@ -146,6 +198,8 @@ const appReducer = (state, action) => {
         direction: 90,
         width: definition.defaultWidth,
         height: definition.defaultHeight,
+        size: 100,
+        sayMessage: null,
         script: [], // Start with an empty script
       };
 

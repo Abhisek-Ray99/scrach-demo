@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { BLOCK_TYPES } from '../constants/blocks';
+import { useEffect, useRef, useCallback } from "react";
+import { BLOCK_TYPES } from "../constants/blocks";
 
 /**
  * useSpriteAnimation (Corrected Stop Logic & Repeat)
@@ -23,10 +23,11 @@ export const useSpriteAnimation = (isRunning, sprites, dispatch) => {
   useEffect(() => {
     const prevState = executionState.current;
     const newState = {};
-    sprites.forEach(sprite => {
+    sprites.forEach((sprite) => {
       const spriteId = sprite.id;
       const existing = prevState[spriteId];
-      const canRun = sprite.script?.[0]?.type === BLOCK_TYPES.EVENT_FLAG_CLICKED;
+      const canRun =
+        sprite.script?.[0]?.type === BLOCK_TYPES.EVENT_FLAG_CLICKED;
       newState[spriteId] = existing
         ? { ...existing, canRun } // Preserve pointer/loopState, update canRun
         : { scriptPointer: canRun ? 1 : 0, canRun, loopState: {} }; // Initialize new
@@ -37,10 +38,11 @@ export const useSpriteAnimation = (isRunning, sprites, dispatch) => {
   // Effect 2: Reset pointers and loop state on animation start
   useEffect(() => {
     if (isRunning) {
-      Object.values(executionState.current).forEach(state => {
-        if (state) { // Ensure state exists
-            state.scriptPointer = state.canRun ? 1 : 0;
-            state.loopState = {}; // Clear loop state on START
+      Object.values(executionState.current).forEach((state) => {
+        if (state) {
+          // Ensure state exists
+          state.scriptPointer = state.canRun ? 1 : 0;
+          state.loopState = {}; // Clear loop state on START
         }
       });
     }
@@ -60,17 +62,38 @@ export const useSpriteAnimation = (isRunning, sprites, dispatch) => {
       case BLOCK_TYPES.MOTION_MOVE_STEPS: {
         const steps = block.values[0] || 0;
         const angle = (sprite.direction - 90) * (Math.PI / 180);
-        updates = { x: sprite.x + steps * Math.cos(angle), y: sprite.y + steps * Math.sin(angle) };
+        updates = {
+          x: sprite.x + steps * Math.cos(angle),
+          y: sprite.y + steps * Math.sin(angle),
+        };
         break;
       }
       case BLOCK_TYPES.MOTION_TURN_DEGREES: {
         const deg = block.values[0] || 0;
-        const newDir = ((sprite.direction + deg) % 360 + 360) % 360;
+        const newDir = (((sprite.direction + deg) % 360) + 360) % 360;
+        updates = { direction: newDir };
+        break;
+      }
+      case BLOCK_TYPES.MOTION_TURN_DEGREES_ANTI_CLOCK: {
+        const deg = block.values[0] || 0;
+        const newDir = (((sprite.direction - deg) % 360) + 360) % 360;
         updates = { direction: newDir };
         break;
       }
       case BLOCK_TYPES.MOTION_GOTO_XY: {
         updates = { x: block.values[0] || 0, y: block.values[1] || 0 };
+        break;
+      }
+      case BLOCK_TYPES.LOOKS_SAY: {
+        const message = block.values[0] || ''; 
+        updates = { sayMessage: message }; 
+        break;
+      }
+      case BLOCK_TYPES.LOOKS_CHANGE_SIZE_BY: {
+        const change = block.values[0] || 0;
+        let newSize = (sprite.size || 100) + change;
+        newSize = Math.max(10, Math.min(newSize, 500));
+        updates = { size: newSize };
         break;
       }
       case BLOCK_TYPES.CONTROL_REPEAT: {
@@ -100,7 +123,8 @@ export const useSpriteAnimation = (isRunning, sprites, dispatch) => {
         // Execute child if available
         if (loop.childIndex < children.length) {
           const child = children[loop.childIndex];
-          if (child) { // Safety check for child block
+          if (child) {
+            // Safety check for child block
             const result = executeBlock(sprite, child, state); // Recursive call
             if (result.updates) updates = result.updates; // Capture updates from child
           }
@@ -133,86 +157,95 @@ export const useSpriteAnimation = (isRunning, sprites, dispatch) => {
   }, []); // No external dependencies needed for logic
 
   // --- The Core Animation Loop Logic ---
-  const animate = useCallback((timestamp) => {
-    if (!isRunning) {
-      animationFrameId.current = null;
-      return;
-    }
-
-    let shouldStopGlobal = false; // Flag to signal stopping after processing all sprites
-
-    sprites.forEach(sprite => {
-      const state = executionState.current[sprite.id];
-      // Basic checks to see if sprite should run
-      if (!state?.canRun || !sprite.script || sprite.script.length <= 1) return;
-
-      const pointer = state.scriptPointer;
-      // Check if already past the end (e.g., from previous frame)
-      if (pointer >= sprite.script.length) {
-          // Script finished in a previous frame, do nothing for this sprite
-          return;
-      }
-
-      const block = sprite.script[pointer];
-      // console.log('Executing block:', block, 'at pointer:', pointer, 'for sprite:', sprite.id);
-      if (!block) {
-        console.error(`Block undefined at pointer ${pointer} for sprite ${sprite.id}`);
-        state.scriptPointer++; // Try to recover by skipping
+  const animate = useCallback(
+    (timestamp) => {
+      if (!isRunning) {
+        animationFrameId.current = null;
         return;
       }
 
-      // Execute the current block
-      const { updates, advancePointer } = executeBlock(sprite, block, state);
+      let shouldStopGlobal = false; // Flag to signal stopping after processing all sprites
 
-      // Dispatch state updates if the block caused any
-      if (updates) {
-        dispatch({
-          type: 'UPDATE_SPRITE_STATE',
-          payload: { spriteId: sprite.id, updates }
-        });
-        // --- REMOVED incorrect STOP dispatch from here ---
-      }
+      sprites.forEach((sprite) => {
+        const state = executionState.current[sprite.id];
+        // Basic checks to see if sprite should run
+        if (!state?.canRun || !sprite.script || sprite.script.length <= 1)
+          return;
 
-      // Advance the pointer if the block execution allows it
-      if (advancePointer) {
+        const pointer = state.scriptPointer;
+        // Check if already past the end (e.g., from previous frame)
+        if (pointer >= sprite.script.length) {
+          // Script finished in a previous frame, do nothing for this sprite
+          return;
+        }
+
+        const block = sprite.script[pointer];
+        // console.log('Executing block:', block, 'at pointer:', pointer, 'for sprite:', sprite.id);
+        if (!block) {
+          console.error(
+            `Block undefined at pointer ${pointer} for sprite ${sprite.id}`
+          );
+          state.scriptPointer++; // Try to recover by skipping
+          return;
+        }
+
+        // Execute the current block
+        const { updates, advancePointer } = executeBlock(sprite, block, state);
+
+        // Dispatch state updates if the block caused any
+        if (updates) {
+          dispatch({
+            type: "UPDATE_SPRITE_STATE",
+            payload: { spriteId: sprite.id, updates },
+          });
+          // --- REMOVED incorrect STOP dispatch from here ---
+        }
+
+        // Advance the pointer if the block execution allows it
+        if (advancePointer) {
           state.scriptPointer++;
 
           // --- Check if script finished AFTER advancing pointer ---
           if (state.scriptPointer >= sprite.script.length) {
-              console.log(`Sprite ${sprite.id} finished script.`);
-              // Reset pointer for next run (optional, good practice)
-              state.scriptPointer = state.canRun ? 1 : 0;
-              state.loopState = {}; // Clear loops too
-              // Signal that the global animation should stop *after* this frame
-              shouldStopGlobal = true;
+            console.log(`Sprite ${sprite.id} finished script.`);
+            // Reset pointer for next run (optional, good practice)
+            state.scriptPointer = state.canRun ? 1 : 0;
+            state.loopState = {}; // Clear loops too
+            // Signal that the global animation should stop *after* this frame
+            shouldStopGlobal = true;
           }
           // --- End script finished check ---
-      }
-    }); // End forEach sprite
+        }
+      }); // End forEach sprite
 
-    // --- Stop Global Animation ONLY if a script finished ---
-    if (shouldStopGlobal) {
-        console.log("A sprite finished its script, dispatching STOP_ANIMATION.");
-        dispatch({ type: 'STOP_ANIMATION' });
+      // --- Stop Global Animation ONLY if a script finished ---
+      if (shouldStopGlobal) {
+        console.log(
+          "A sprite finished its script, dispatching STOP_ANIMATION."
+        );
+        dispatch({ type: "STOP_ANIMATION" });
         // No need to schedule next frame
         animationFrameId.current = null;
         return; // Exit animate function
-    }
-    // --- End Stop Global Animation ---
+      }
+      // --- End Stop Global Animation ---
 
-
-    // Schedule the next frame if still running
-    if (isRunning) { // Check isRunning again before scheduling
-      animationFrameId.current = requestAnimationFrame(animate);
-    } else {
-      animationFrameId.current = null; // Clear if stopped during this frame
-    }
-  }, [isRunning, sprites, dispatch, executeBlock]); // Dependencies
+      // Schedule the next frame if still running
+      if (isRunning) {
+        // Check isRunning again before scheduling
+        animationFrameId.current = requestAnimationFrame(animate);
+      } else {
+        animationFrameId.current = null; // Clear if stopped during this frame
+      }
+    },
+    [isRunning, sprites, dispatch, executeBlock]
+  ); // Dependencies
 
   // Effect 3: Animation loop lifecycle management
   useEffect(() => {
     if (isRunning) {
-      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+      if (animationFrameId.current)
+        cancelAnimationFrame(animationFrameId.current);
       animationFrameId.current = requestAnimationFrame(animate);
     } else {
       if (animationFrameId.current) {
@@ -228,5 +261,4 @@ export const useSpriteAnimation = (isRunning, sprites, dispatch) => {
       }
     };
   }, [isRunning, animate]); // Dependencies
-
 }; // End of hook

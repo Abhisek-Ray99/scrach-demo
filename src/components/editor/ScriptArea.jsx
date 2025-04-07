@@ -7,17 +7,25 @@ import { BLOCK_DEFINITIONS, BLOCK_TYPES } from '../../constants/blocks';
 // --- Imports for block components (ensure they are correct) ---
 import MoveStepsBlock from '../blocks/Motion/MoveStepsBlock';
 import TurnDegreesBlock from '../blocks/Motion/TurnDegreesBlock';
+import TurnDegreesAntiClockBlock from '../blocks/Motion/TurnDegreeAntiClockBlock';
 import GoToXYBlock from '../blocks/Motion/GoToXYBlock';
 import RepeatBlock from '../blocks/Controls/RepeatBlock';
 import FlagClickEventBlock from '../blocks/Events/FlagClickEventBlock';
+
+import SayBlock from '../blocks/Looks/SayBlock'; 
+import ChangeSizeBlock from '../blocks/Looks/ChangeSizeBlock'; 
+
 
 // --- blockComponentMap (ensure it's correct) ---
 const blockComponentMap = {
   [BLOCK_TYPES.MOTION_MOVE_STEPS]: MoveStepsBlock,
   [BLOCK_TYPES.MOTION_TURN_DEGREES]: TurnDegreesBlock,
+  [BLOCK_TYPES.MOTION_TURN_DEGREES_ANTI_CLOCK]: TurnDegreesAntiClockBlock,
   [BLOCK_TYPES.MOTION_GOTO_XY]: GoToXYBlock,
   [BLOCK_TYPES.CONTROL_REPEAT]: RepeatBlock,
   [BLOCK_TYPES.EVENT_FLAG_CLICKED]: FlagClickEventBlock,
+  [BLOCK_TYPES.LOOKS_SAY]: SayBlock, 
+  [BLOCK_TYPES.LOOKS_CHANGE_SIZE_BY]: ChangeSizeBlock, 
 };
 
 const ScriptArea = () => {
@@ -118,6 +126,9 @@ const ScriptArea = () => {
       onDeleteBlock: handleDeleteBlock,
       // --- Other props ---
       ...(block.type === BLOCK_TYPES.MOTION_MOVE_STEPS && { steps: block.values[0] }),
+
+      ...(block.type === BLOCK_TYPES.LOOKS_SAY && { message: block.values[0] }),
+      ...(block.type === BLOCK_TYPES.LOOKS_CHANGE_SIZE_BY && { change: block.values[0] }),
       // ... other specific props ...
       ...(Object.prototype.hasOwnProperty.call(block, 'children') && { renderedChildren: renderedChildren }),
       ...(Object.prototype.hasOwnProperty.call(block, 'children') && { onDropIntoBlock: handleDropIntoBlock }),

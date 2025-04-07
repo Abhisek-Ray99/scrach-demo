@@ -230,3 +230,27 @@ h1 {
     background-color: #f9f9f9;
   }
 }
+
+@layer components {
+  .speech-bubble-tail::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: white transparent transparent transparent;
+  }
+  .speech-bubble-tail::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(1px);
+    border-width: 7px;
+    border-style: solid;
+    border-color: #9ca3af transparent transparent transparent; /* Match border-gray-400 */
+    /* z-index: -1; */ /* May not be needed depending on stacking context */
+  }
+}

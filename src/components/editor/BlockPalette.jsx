@@ -8,6 +8,9 @@ import RepeatBlock from '../blocks/Controls/RepeatBlock';
 import FlagClickEventBlock from '../blocks/Events/FlagClickEventBlock';
 // ... other imports
 import { BLOCK_TYPES } from '../../constants/blocks';
+import TurnDegreesAntiClockBlock from '../blocks/Motion/TurnDegreeAntiClockBlock';
+import SayBlock from '../blocks/Looks/SayBlock'; 
+import ChangeSizeBlock from '../blocks/Looks/ChangeSizeBlock'; 
 
 const BlockPalette = () => {
   // Drag start handler - sets data for the drop target
@@ -37,6 +40,7 @@ const BlockPalette = () => {
           {/* Ensure isPaletteBlock={true} and onDragStart are passed */}
           <MoveStepsBlock isPaletteBlock={true} onDragStart={handleDragStart} />
           <TurnDegreesBlock isPaletteBlock={true} onDragStart={handleDragStart} />
+          <TurnDegreesAntiClockBlock isPaletteBlock={true} onDragStart={handleDragStart} />
           <GoToXYBlock isPaletteBlock={true} onDragStart={handleDragStart} />
         </div>
       </div>
@@ -50,6 +54,15 @@ const BlockPalette = () => {
         </div>
       </div>
       {/* Add other categories */}
+
+      <div  className="p-4">
+        <h3 className="text-xs font-bold uppercase text-gray-500 mb-2 tracking-wide">Looks</h3>
+        <div className="space-y-1.5">
+          <SayBlock isPaletteBlock={true} onDragStart={handleDragStart} />
+          <ChangeSizeBlock isPaletteBlock={true} onDragStart={handleDragStart} />
+          {/* Add other looks blocks here */}
+        </div>
+      </div>
 
       <div className="p-4">
         <h3 className="text-xs font-bold uppercase text-[#7F7F7F] mb-2 tracking-wide">Events</h3>
